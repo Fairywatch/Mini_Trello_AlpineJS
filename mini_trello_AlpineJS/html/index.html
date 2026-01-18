@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/alpinejs" defer></script>
     <script src="../js/data.js"></script>
-    <script src="../js/formNouvelleTache.js"></script>
+    <script src="../js/nouvelleTache.js"></script>
     <link rel="stylesheet" href="../css/_root.css">
     <title>Mini Trello - Gestion de tâches</title>
 </head>
@@ -42,7 +42,7 @@
         <div x-data="formHandler()" 
              x-show="show"
              @ouvrir-formulaire.window="show = true"
-             @preparer-modification.window="ouvrirPourModification($event.detail)"
+             @preparer-modification.window="modification($event.detail)"
              x-transition
              class="formulaire-overlay"
              @click.self="show = false">
