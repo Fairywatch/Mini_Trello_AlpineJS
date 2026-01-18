@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/alpinejs" defer></script>
+    <script src="../js/data.js"></script>
+    <script src="../js/formNouvelleTache.js"></script>
+    <link rel="stylesheet" href="../css/_root.css">
+    <title>Mini Trello - Gestion de tâches</title>
+</head>
+<body>
+    <div x-data="todoApp()" x-init="init()"
+         @tache-ajoutee.window="ajouterTache($event.detail.titre, $event.detail.description)"
+         @tache-modifiee.window="modifierTache($event.detail.id, $event.detail.details)"
+         class="app-container">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="app-title">Mini Trello</h1>
+                <p class="app-subtitle">Organisez vos tâches facilement</p>
+            </div>
+        </header>
+
+
+        <div class="bandeau-haut-wrapper">
+            <button @click="$dispatch('ouvrir-formulaire')" class="btn-ajouter">
+                <span class="btn-icon">+</span> Ajouter une tâche
+            </button>
+            <div class="barre-recherche-container">
+                <span class="search-icon">🔍</span>
+                <input type="text"
+                       x-model="recherche"
+                       placeholder="Rechercher une tâche..."
+                       class="barre-de-recherche">
+            </div>
+        </div>
+
+
+        <div x-data="formHandler()" 
+             x-show="show"
+             @ouvrir-formulaire.window="show = true"
+             @preparer-modification.window="ouvrirPourModification($event.detail)"
+             x-transition
+             class="formulaire-overlay"
+             @click.self="show = false">
+            <div class="nouvelle-tache-formulaire" @click.stop>
+                <div class="formulaire-header">
+                    <h2 x-text="modifId ? ' Modifier la tâche' : ' Nouvelle tâche'"></h2>
+                    <button @click="show = false" class="btn-fermer">✕</button>
+                </div>
+                <form @submit.prevent="submitForm()">
+                    <div class="form-group">
+                        <label>Titre de la tâche</label>
+                        <input type="text" x-model="formData.title" placeholder="Ex: Faire les courses..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea x-model="formData.desc" placeholder="Détails de la tâche..." required></textarea>
+                    </div>
+                    <div class="form-group" x-show="modifId !== null">
+                        <label>Changer le statut</label>
+                        <select x-model="formData.statut" class="formulaire-statut-modif">
+                            <option value="a faire"> A faire</option>
+                            <option value="en cours"> En cours</option>
+                            <option value="fini"> Fini</option>
+                        </select>
+                    </div>
+                    <div class="formulaire-actions">
+                        <button type="submit" class="btn-submit" x-text="modifId ? '💾 Enregistrer' : '✅ Créer'"></button>
+                        <button type="button" @click="show = false" class="btn-annuler">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tasks Grille -->
+        <div class="liste-taches-wrapper">
+            <!-- A Faire Colonne -->
+            <div class="colonne-taches">
+                <div class="colonne-header">
+                    <h2> A faire</h2>
+                    <span class="badge-count" x-text="getTachesParStatut('a faire').length"></span>
+                </div>
+                <div class="taches-container">
+                    <template x-for="tache in getTachesParStatut('a faire')" :key="tache.id">
+                        <div class="carte-tache" x-transition
+                             @mouseenter="hovered = tache.id"
+                             @mouseleave="hovered = null">
+                            <div class="carte-header">
+                                <h3 x-text="tache.title" class="carte-tache-titre"></h3>
+                                <span class="badge-status" :class="'status-' + tache.statut">📋</span>
+                            </div>
+                            <p x-text="tache.desc" class="carte-tache-description"></p>
+                            <div class="carte-actions" x-show="hovered === tache.id">
+                                <button @click="$dispatch('preparer-modification', tache)" class="btn-modifier" title="Modifier">✏️</button>
+                                <button @click="supprimerTache(tache.id)" class="btn-supprimer" title="Supprimer">🗑️</button>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="getTachesParStatut('a faire').length === 0">
+                        <div class="empty-state">
+                            <p>Aucune tâche à faire</p>
+                            <span>Cliquez sur le bouton + pour en ajouter une</span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- En Cours Colonne -->
+            <div class="colonne-taches">
+                <div class="colonne-header">
+                    <h2> En cours</h2>
+                    <span class="badge-count" x-text="getTachesParStatut('en cours').length"></span>
+                </div>
+                <div class="taches-container">
+                    <template x-for="tache in getTachesParStatut('en cours')" :key="tache.id">
+                        <div class="carte-tache" x-transition
+                             @mouseenter="hovered = tache.id"
+                             @mouseleave="hovered = null">
+                            <div class="carte-header">
+                                <h3 x-text="tache.title" class="carte-tache-titre"></h3>
+                                <span class="badge-status" :class="'status-' + tache.statut">⏳</span>
+                            </div>
+                            <p x-text="tache.desc" class="carte-tache-description"></p>
+                            <div class="carte-actions" x-show="hovered === tache.id">
+                                <button @click="$dispatch('preparer-modification', tache)" class="btn-modifier" title="Modifier">✏️</button>
+                                <button @click="supprimerTache(tache.id)" class="btn-supprimer" title="Supprimer">🗑️</button>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="getTachesParStatut('en cours').length === 0">
+                        <div class="empty-state">
+                            <p>Aucune tâche en cours</p>
+                            <span>Commencez une tâche pour la voir ici</span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Fini Colonne -->
+            <div class="colonne-taches">
+                <div class="colonne-header">
+                    <h2> Fini</h2>
+                    <span class="badge-count" x-text="getTachesParStatut('fini').length"></span>
+                </div>
+                <div class="taches-container">
+                    <template x-for="tache in getTachesParStatut('fini')" :key="tache.id">
+                        <div class="carte-tache completed" x-transition
+                             @mouseenter="hovered = tache.id"
+                             @mouseleave="hovered = null">
+                            <div class="carte-header">
+                                <h3 x-text="tache.title" class="carte-tache-titre"></h3>
+                                <span class="badge-status" :class="'status-' + tache.statut">✅</span>
+                            </div>
+                            <p x-text="tache.desc" class="carte-tache-description"></p>
+                            <div class="carte-actions" x-show="hovered === tache.id">
+                                <button @click="$dispatch('preparer-modification', tache)" class="btn-modifier" title="Modifier">✏️</button>
+                                <button @click="supprimerTache(tache.id)" class="btn-supprimer" title="Supprimer">🗑️</button>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="getTachesParStatut('fini').length === 0">
+                        <div class="empty-state">
+                            <p>Aucune tâche terminée</p>
+                            <span>Complétez vos tâches pour les voir ici</span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>&copy; 2026 Mini Trello | Efrei 2026 | Mathis, Guillaume, Nathan, Samy</p>
+    </footer>
+</body>
+</html>
