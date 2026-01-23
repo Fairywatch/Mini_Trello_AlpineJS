@@ -1,16 +1,14 @@
-// Gestionnaire du formulaire pour ajouter et modifier les tâches
 window.formHandler = function() {
     return {
-        show: false, // Affichage du formulaire (modal)
-        modifId: null, // ID de la tâche en modification (null = création)
+        show: false,
+        modifId: null,
         formData: { 
             title: '', 
             desc: '', 
             statut: 'a faire'
         },
 
-        // Pré-remplir le formulaire quand on le ouvre pour modification
-        ouvrirPourModification(tache) {
+        modification(tache) {
             this.modifId = tache.id;
             this.formData.title = tache.title;
             this.formData.desc = tache.desc;
@@ -18,7 +16,6 @@ window.formHandler = function() {
             this.show = true;
         },
 
-        // Soumettre le formulaire
         submitForm() {
             if (!this.formData.title.trim() || !this.formData.desc.trim()) {
                 alert('Veuillez remplir tous les champs');
@@ -26,7 +23,6 @@ window.formHandler = function() {
             }
 
             if (this.modifId) {
-                // Modification d'une tâche existante
                 this.$dispatch('tache-modifiee', {
                     id: this.modifId,
                     details: {
@@ -36,7 +32,6 @@ window.formHandler = function() {
                     }
                 });
             } else {
-                // Création d'une nouvelle tâche
                 this.$dispatch('tache-ajoutee', {
                     titre: this.formData.title,
                     description: this.formData.desc
@@ -46,7 +41,6 @@ window.formHandler = function() {
             this.reset();
         },
 
-        // Réinitialiser le formulaire
         reset() {
             this.show = false;
             this.modifId = null;
